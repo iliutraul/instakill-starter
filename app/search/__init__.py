@@ -1,0 +1,1 @@
+"""Search adapters, persistence boundaries, and retrieval logic."""

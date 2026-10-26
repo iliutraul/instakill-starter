@@ -10,19 +10,20 @@ What the instructor provides (this starter):
 - `scripts/seed_db.py` — 5-10 synthetic users/posts
 - `tests/test_health.py` — test skeleton
 
-What it does **not** provide: the feed, ranking, ML models, search. Those are the team's work, in the following weeks.
+This week's addition is `GET /search`, an in-memory semantic index over posts in SQLite. Retrieval and deterministic NumPy cosine ranking are separate from the HTTP, database, and model-loading boundaries.
 
 ## Running it
 
 ```bash
 pip install -e .
+python scripts/seed_db.py
 uvicorn app.main:app --reload
 # other terminal:
-curl localhost:8000/health
-
-python scripts/seed_db.py
+curl "localhost:8000/search?q=cosine%20similarity&limit=5"
 pytest
 ```
+
+At application startup, `app.main` loads the CPU `all-MiniLM-L6-v2` encoder, reads posts through `SQLitePostRepository`, and asks `SearchService` to build an in-memory index. The first startup downloads the pretrained model if it is not cached. A future post-creation operation should refresh the index by calling `SearchService.build_index()` after the database write; no post-writing endpoint is included yet.
 
 ## Milestones (see masterplan.md for full details)
 

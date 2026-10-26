@@ -1,36 +1,39 @@
-# API Contract: Create Post
+# API Contract: Search Posts
 
-**Status:** planned; this endpoint is not implemented.
+## `GET /search`
 
-## `POST /posts`
+Searches the seeded post corpus using semantic similarity. The application loads the encoder and builds an in-memory index during startup.
 
-### Request
+### Query parameters
 
-```json
-{
-  "user_id": 7,
-  "content": "A short post"
-}
-```
+- `q` (required): a non-empty, non-whitespace query string.
+- `limit` (optional): integer from 1 through 20; defaults to 10.
 
-Both fields are required. `user_id` must be an integer identifying an existing user. `content` must be a non-empty string.
+Example: `GET /search?q=cosine%20similarity&limit=5`
 
 ### Successful response
 
-`201 Created`
+`200 OK`
 
 ```json
 {
-  "id": 42,
-  "user_id": 7,
-  "content": "A short post",
-  "created_at": "2026-10-26T12:00:00Z"
+  "query": "cosine similarity",
+  "results": [
+    {
+      "post_id": 3,
+      "user_id": 2,
+      "content": "just shipped a cosine similarity search, feels great",
+      "score": 0.82
+    }
+  ]
 }
 ```
 
+Results contain no more than `limit` posts, ordered by descending cosine similarity. Equal scores are ordered by ascending `post_id`. An empty corpus returns an empty `results` list.
+
 ### Validation and error cases
 
-- `422 Unprocessable Entity` when a required field is missing, has the wrong type, or `content` is empty.
-- `404 Not Found` when `user_id` does not identify an existing user.
+- `422 Unprocessable Entity` when `q` is missing, empty, or whitespace-only.
+- `422 Unprocessable Entity` when `limit` is not an integer or is outside 1 through 20.
 
-Errors use the standard FastAPI `detail` response shape. These behaviors describe the future endpoint only; no route or persistence behavior is added in this iteration.
+Errors use FastAPI's standard `detail` response shape.
