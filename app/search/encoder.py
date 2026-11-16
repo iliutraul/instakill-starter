@@ -1,6 +1,7 @@
 """CPU Sentence Transformers adapter."""
 
 from collections.abc import Sequence
+from functools import lru_cache
 
 import numpy as np
 from numpy.typing import NDArray
@@ -29,3 +30,8 @@ class SentenceTransformerEncoder:
             show_progress_bar=False,
         )
         return np.asarray(embedding, dtype=np.float32)
+
+
+@lru_cache(maxsize=1)
+def get_sentence_transformer_encoder() -> SentenceTransformerEncoder:
+    return SentenceTransformerEncoder()

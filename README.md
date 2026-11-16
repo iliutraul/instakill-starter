@@ -10,7 +10,7 @@ What the instructor provides (this starter):
 - `scripts/seed_db.py` — 5-10 synthetic users/posts
 - `tests/test_health.py` — test skeleton
 
-This week's addition is `GET /search`, an in-memory semantic index over posts in SQLite. Retrieval and deterministic NumPy cosine ranking are separate from the HTTP, database, and model-loading boundaries.
+This week's additions are `GET /search`, an in-memory semantic index over posts in SQLite, and `GET /movies/search`, a semantic MovieLens search over movie titles, genres, and user tags. Retrieval and deterministic NumPy cosine ranking are separate from the HTTP, data, and model-loading boundaries.
 
 ## Running it
 
@@ -20,10 +20,11 @@ python scripts/seed_db.py
 uvicorn app.main:app --reload
 # other terminal:
 curl "localhost:8000/search?q=cosine%20similarity&limit=5"
+curl "localhost:8000/movies/search?q=space%20adventure&limit=5"
 pytest
 ```
 
-At application startup, `app.main` loads the CPU `all-MiniLM-L6-v2` encoder, reads posts through `SQLitePostRepository`, and asks `SearchService` to build an in-memory index. The first startup downloads the pretrained model if it is not cached. A future post-creation operation should refresh the index by calling `SearchService.build_index()` after the database write; no post-writing endpoint is included yet.
+At application startup, `app.main` loads the CPU `all-MiniLM-L6-v2` encoder, reads posts through `SQLitePostRepository` and MovieLens data from `data/movielens/`, then builds both in-memory indices. The first startup downloads the pretrained model if it is not cached. The MovieLens files and their use terms/citation are in `data/movielens/README.txt`. A future post-creation operation should refresh the post index by calling `SearchService.build_index()` after the database write; no post-writing endpoint is included yet.
 
 ## Milestones (see masterplan.md for full details)
 

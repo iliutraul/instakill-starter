@@ -37,3 +37,35 @@ Results contain no more than `limit` posts, ordered by descending cosine similar
 - `422 Unprocessable Entity` when `limit` is not an integer or is outside 1 through 20.
 
 Errors use FastAPI's standard `detail` response shape.
+
+## `GET /movies/search`
+
+Searches the MovieLens collection semantically using movie titles, genres, and user-applied tags. The application loads `data/movielens/movies.csv` and `data/movielens/tags.csv`, builds an in-memory index during startup, and uses the same CPU sentence encoder as post search.
+
+### Query parameters
+
+- `q` (required): a non-empty, non-whitespace query string.
+- `limit` (optional): integer from 1 through 20; defaults to 10.
+
+Example: `GET /movies/search?q=space%20adventure&limit=5`
+
+### Successful response
+
+`200 OK`
+
+```json
+{
+  "query": "space adventure",
+  "results": [
+    {
+      "movie_id": 1,
+      "title": "Toy Story (1995)",
+      "genres": ["Adventure", "Animation", "Children", "Comedy", "Fantasy"],
+      "tags": ["pixar"],
+      "score": 0.82
+    }
+  ]
+}
+```
+
+Results contain no more than `limit` movies, ordered by descending cosine similarity. Equal scores are ordered by ascending `movie_id`. An empty movie collection returns an empty `results` list. Missing, empty, or whitespace-only queries and limits outside 1 through 20 return `422` with FastAPI's standard `detail` response shape.
