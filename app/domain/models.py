@@ -15,3 +15,10 @@ class Post(BaseModel):
     user_id: int
     content: str
     created_at: datetime | None = None
+
+
+class Movie(BaseModel):
+    movie_id: int
+    title: str
+    genres: list[str]
+    tags: list[str]
