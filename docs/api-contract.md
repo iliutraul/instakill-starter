@@ -38,6 +38,20 @@ Results contain no more than `limit` posts, ordered by descending cosine similar
 
 Errors use FastAPI's standard `detail` response shape.
 
+## `GET /feed`
+
+Ranks available posts through the shared feed service.
+
+### Query parameters
+
+- `user_id` (required): positive integer user ID.
+- `strategy` (optional): `chronological`, `for_you`, or `learned`; defaults to `for_you`. `popularity` is an evaluation-only baseline and is not exposed by the API.
+- `limit` (optional): integer from 1 through 50; defaults to 10.
+
+Example: `GET /feed?user_id=12&strategy=learned&limit=10`
+
+The response contains the requested `user_id` and `strategy`, plus ranked results with `post_id`, author `user_id`, `content`, `created_at`, and strategy `score`. Posts created in the future or already liked by the requesting user are not returned. `learned` loads the repository's `like_model.npz`; if that model is missing, the request returns an explicit server error rather than silently switching strategies.
+
 ## `GET /movies/search`
 
 Searches the MovieLens collection semantically using movie titles, genres, and user-applied tags. The application loads `data/movielens/movies.csv` and `data/movielens/tags.csv`, builds an in-memory index during startup, and uses the same CPU sentence encoder as post search.
