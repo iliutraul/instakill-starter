@@ -3,6 +3,7 @@ from collections.abc import Callable
 
 from fastapi import FastAPI
 
+from app.api.feed import router as feed_router
 from app.api.movies import router as movies_router
 from app.api.search import router as search_router
 from app.db.database import init_db
@@ -43,6 +44,7 @@ def create_app(
         yield
 
     app = FastAPI(title="InstaKill", lifespan=lifespan)
+    app.include_router(feed_router)
     app.include_router(search_router)
     app.include_router(movies_router)
 

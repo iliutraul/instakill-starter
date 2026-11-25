@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dirty Data Pipeline</title>
+<meta name="description" content="Lecture deck for Programming for AI: pandas and data processing. Instructor material.">
+<link rel="icon" href="assets/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/deck.css">
+</head>
+<body>
+<div class="viewport">
+<div class="stage" id="stage">
+
+  <header class="chrome">
+    <img class="logo" src="assets/LOGO-ULBS_orizontal_negativ.png" alt="Universitatea Lucian Blaga din Sibiu">
+    <span class="deck-title">Programming for AI</span>
+    <span class="chip" id="seg-chip">Opening</span>
+    <span class="spacer"></span>
+    <div class="tools">
+      <button class="tool" id="btn-prev" aria-label="Previous slide">◀</button>
+      <button class="tool" id="btn-next" aria-label="Next slide">▶</button>
+      <button class="tool" id="btn-overview">Slides</button>
+      <button class="tool" id="btn-notes">Notes</button>
+      <button class="tool" id="btn-full">Full</button>
+      <button class="tool" id="btn-help">?</button>
+    </div>
+    <div id="progress"><div id="progress-bar"></div></div>
+  </header>
+
+  <main class="slides">
+
+    <!-- 1 ============================================================ -->
+    <section class="slide title" data-segment="intro" data-title="Dirty Data Pipeline">
+      <img class="logo-big" src="assets/LOGO-ULBS_orizontal_negativ.png" alt="Universitatea Lucian Blaga din Sibiu">
+      <h2 style="font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#aac4ee">Programming for AI · pandas</h2>
+      <h1>Dirty Data Pipeline</h1>
+      <p>Every model you trained so far ate clean tables. Real apps produce logs. Today a messy log becomes a table you can trust.</p>
+      <div class="meta">pandas · cleaning · leakage · reproducibility · no lab</div>
+      <div class="hints"><span><kbd>←</kbd> <kbd>→</kbd> navigate</span><span><kbd>N</kbd> notes</span><span>hover a button: tooltip</span><span><kbd>G</kbd> all slides</span><span><kbd>?</kbd> help</span></div>
+      <aside class="notes">
+        <p class="say">Open with the one-sentence story: until now the data was polite; today it is not.</p>
+        <ul><li>This page is instructor material. It lives in the instructor-facing lecture folder and is not posted to Classroom.</li>
+        <li>Everything on the slides that looks like numbers comes from the real Colab run (MovieLens <code>latest-small</code>, seed 42): 107 388 raw rows, 100 836 clean rows, 3 561 exam questions.</li>
+        <li>Say early and plainly: <b>there is no lab and nothing changes in InstaKill</b>. There is one Colab to run at home, and it produces a file students must keep for later.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 2 ============================================================ -->
+    <section class="slide" data-segment="intro" data-title="What you will learn">
+      <h2><span class="kick">Overview</span>What you will learn and what you do</h2>
+      <p class="sub">What the lecture gives you, and the one thing you do before the next lecture.</p>
+      <div class="cols two grow" style="margin-top:6px">
+        <div class="card big"><h3>What you will learn</h3>
+          <ul class="tight"><li>How to read a table before you touch it: types, missing values, odd rows</li><li>The pandas tools for the job: <code>to_numeric</code>, <code>dropna</code>, <code>merge</code>, <code>drop_duplicates</code>, <code>groupby</code></li><li>Why the <b>order</b> of cleaning steps matters</li><li>Why a feature that knows the future makes a model look great and be useless</li></ul></div>
+        <div class="card big"><h3>What you do</h3>
+          <ul class="tight"><li><b>No lab, no grade, no InstaKill change</b></li><li>Run the Colab <code>week06.ipynb</code> top to bottom (a few minutes, CPU)</li><li><b>Keep the file</b> <code>feature_table.parquet</code> it produces: you will need it later</li><li>Lost it? Run the Colab again: you get the same file</li></ul></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Two things: understand how data gets dirty, and run one notebook at home that costs you ten minutes.</p>
+        <ul><li>The Colab has nothing to complete. It is a guided walk-through with checks that must pass, but without coding tasks.</li>
+        <li>Students upload the MovieLens <code>latest-small</code> zip they may already have. Remind them the automatic download fails on GroupLens's certificate chain.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 3 ============================================================ -->
+    <section class="slide" data-segment="intro" data-title="Lightning demos">
+      <h2><span class="kick">Opening · 20 min</span>Lightning demos: the neural-network lab</h2>
+      <p class="sub">Two to four students, about five minutes each, on the results of the neural-network lab.</p>
+      <div class="cols three grow" style="margin-top:6px">
+        <div class="card"><h3>Show</h3><ul class="tight"><li>Your three numbers (<code>HIDDEN</code>, <code>LEARNING_RATE</code>, <code>EPOCHS</code>)</li><li>Baselines and your score on <code>val</code>, then on <code>test</code></li></ul></div>
+        <div class="card"><h3>Explain</h3><ul class="tight"><li>One of your three failure sentences</li><li>What surprised you when the gradient check passed (or did not)</li></ul></div>
+        <div class="card"><h3>Bonus rule</h3><ul class="tight"><li>+0.25 per good talk, maximum +1.00</li><li>0.10 reproducible demo · 0.10 evidence · 0.05 insight</li><li>A well-investigated failure earns the full bonus</li></ul></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Same rule as always: a reproducible failure is worth as much as a success.</p>
+        <ul><li>Pick presenters whose results differ: one that beat the straight line clearly, one that barely did, one that did not.</li>
+        <li>Keep a note of any result that looks strange. The next block uses one of them.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 4 ============================================================ -->
+    <section class="slide" data-segment="clinic" data-title="Is the number real?">
+      <h2><span class="kick">Part 1 · Failure clinic</span>Is the number real?</h2>
+      <p class="sub"><b>The situation.</b> In the neural-network lab a hidden layer beat the best straight line by about 0.03 NDCG@10. Three students report improvements of that size after changing something. None of them can say whether it is real.</p>
+      <div class="cols two grow" style="margin-top:6px">
+        <div class="card big"><h3>Questions to ask before believing a gain</h3>
+          <ul class="tight"><li>Same exam, same split, same seed?</li><li>Did a row appear twice, once in the training part and once in the exam?</li><li>Is any timestamp wrong, so that "the past" contains the future?</li><li>Does any column exist that the live app would not have?</li></ul></div>
+        <div class="card big"><h3>Why this is a data question</h3>
+          <p>A model can only be as honest as its table. Cleaning mistakes do not raise errors: they raise <b>scores</b>.</p>
+          <p class="small">A duplicated event, a 1970 timestamp or a column that knows the future never crashes a notebook. It just changes the number you report.</p></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Before arguing about models, argue about the table.</p>
+        <ul><li>Use a real case from the demos if one fits: a result that was too good, or a gap too small to trust.</li>
+        <li>Do not give the answers yet. Ask the room which of the four questions they would check first, then tell them that the next slides show how each of them goes wrong.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 5 ============================================================ -->
+    <section class="slide" data-segment="clinic" data-title="Two scorers, one cheats">
+      <h2><span class="kick">Part 1 · Failure clinic</span>Two scorers, the same exam: one of them cheats</h2>
+      <p class="sub" style="font-size:16px"><b>The exam.</b> For each moment a user liked an item, we hide that item among 99 random ones: 100 candidates. A scorer gives each candidate a number; we sort, highest first. <b>HitRate@10</b> = in how many questions the liked item is in the top 10. Guessing gives 0.10. Below, one real question, cut to 6 candidates.</p>
+      <div class="cols two grow" style="margin-top:4px;grid-template-columns:1.25fr 1fr;align-items:start">
+        <div>
+          <table class="t" style="font-size:14px">
+            <thead><tr><th style="padding:4px 8px">Candidate</th><th style="padding:4px 8px">Scorer B<br><small>likes <u>before</u> the moment</small></th><th style="padding:4px 8px">Scorer A<br><small>likes in the <u>whole log</u></small></th></tr></thead>
+            <tbody>
+              <tr style="background:rgba(247,163,15,.25)"><td style="padding:3px 8px"><b>(500) Days of Summer (2009)</b> ← the liked item</td><td class="mono" style="padding:3px 8px">22</td><td class="mono" style="padding:3px 8px">26</td></tr>
+              <tr><td style="padding:3px 8px">Grease (1978)</td><td class="mono" style="padding:3px 8px">23</td><td class="mono" style="padding:3px 8px">23</td></tr>
+              <tr><td style="padding:3px 8px">Cider House Rules, The (1999)</td><td class="mono" style="padding:3px 8px">17</td><td class="mono" style="padding:3px 8px">17</td></tr>
+              <tr><td style="padding:3px 8px">Pride and Prejudice (1995)</td><td class="mono" style="padding:3px 8px">6</td><td class="mono" style="padding:3px 8px">6</td></tr>
+              <tr><td style="padding:3px 8px">My Architect: A Son's Journey (2003)</td><td class="mono" style="padding:3px 8px">1</td><td class="mono" style="padding:3px 8px">1</td></tr>
+              <tr><td style="padding:3px 8px">Electroma (2006)</td><td class="mono" style="padding:3px 8px">0</td><td class="mono" style="padding:3px 8px">0</td></tr>
+              <tr style="font-weight:700"><td style="padding:4px 8px">Rank of the liked item</td><td style="padding:4px 8px;color:var(--bad)">2nd (Grease has 23)</td><td style="padding:4px 8px;color:var(--good)">1st</td></tr>
+            </tbody>
+          </table>
+          <p class="small" style="margin:6px 0 0">User 159, 22 October 2017. A = 22 before + the like we must predict + 3 later = 26.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div class="panel" style="padding:10px 12px">
+            <div class="bar-chart">
+              <div class="bar"><span class="name">Random</span><div class="track"><div class="fill" style="width:14%"></div></div><span class="num">0.097</span></div>
+              <div class="bar"><span class="name">Scorer B</span><div class="track"><div class="fill" style="width:89%"></div></div><span class="num">0.609</span></div>
+              <div class="bar you"><span class="name">Scorer A</span><div class="track"><div class="fill" style="width:100%"></div></div><span class="num">0.685</span></div>
+            </div>
+            <p class="small" style="margin:4px 0 0">HitRate@10 on 3 561 exam questions.</p>
+          </div>
+          <div class="callout gold" style="font-size:15px">A and B count <b>the same thing</b>. The only difference: A also counts the like we are trying to predict and the likes that come later. <b>Which one can the live app compute?</b></div>
+        </div>
+      </div>
+      <aside class="notes">
+        <p class="say">Vote first: which scorer is better? Then ask which one the live app could compute at the moment the user opens it.</p>
+        <ul><li>Explain the exam in one breath: one real like hidden among 99 random items; the scorer sorts the 100 by its number; a hit means the liked item is in the top 10.</li>
+        <li>Walk the table. Scorer B (likes before the moment) puts (500) Days of Summer second, behind Grease (22 vs 23). Scorer A puts it first (26 vs 23). The difference is not magic: 26 = 22 likes before the moment + <b>this very like</b> + 3 likes that come later. The column contains the answer.</li>
+        <li>Both columns are the same count, which is why the comparison is fair. A is better on the exam by 0.076 and impossible in production.</li>
+        <li>Real numbers from the Colab (seed 42, 3 561 exam questions): random 0.097, B 0.609, A 0.685. For reference, the <code>popularity</code> signal (likes in the last year) scores 0.580.</li>
+        <li>Do not explain pandas yet. The point is the instinct: when a number looks better, ask which column knows something that nobody could know at that moment.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 6 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Why logs are dirty">
+      <h2><span class="kick">Part 2 · Theory · 1 of 9</span>Why real event logs are dirty</h2>
+      <p class="sub">Nobody makes a log dirty on purpose. It happens because many programs write it, and programs fail in ordinary ways.</p>
+      <table class="t" style="margin-top:6px">
+        <thead><tr><th>Where it comes from</th><th>What it leaves in the log</th></tr></thead>
+        <tbody>
+          <tr><td>Retries after a timeout</td><td>The same event twice, a few seconds apart</td></tr>
+          <tr><td>Half-written requests</td><td>Rows with a missing user or rating</td></tr>
+          <tr><td>Different clients, different conventions</td><td>Seconds here, milliseconds there, date text elsewhere; <code>"4,5"</code> instead of <code>4.5</code></td></tr>
+          <tr><td>Clocks and default values</td><td>Timestamps in 1970 (the value <code>0</code>) or in the future</td></tr>
+          <tr><td>Deleted or renamed things</td><td>Events about an item that no longer exists</td></tr>
+          <tr><td>Exports built for dashboards</td><td>Columns computed from the whole history, which contain the future</td></tr>
+        </tbody>
+      </table>
+      <aside class="notes">
+        <p class="say">Each row of this table is exactly one thing the Colab breaks and then repairs.</p>
+        <ul><li>The Colab's damage script is deterministic (seed 42) and every damage is either fixable or an extra row to discard. That is what makes a perfect cleaning possible, and testable, in a classroom.</li>
+        <li>Ask for one example from a student's own experience: a duplicate payment, a notification sent twice.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 7 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="pandas in one page">
+      <h2><span class="kick">Part 2 · Theory · 2 of 9</span>pandas in one page: six moves and what each one gives back</h2>
+      <div style="display:grid;grid-template-columns:350px 1fr;gap:16px;align-items:start;margin-top:4px">
+        <div>
+          <p class="small" style="margin:0 0 4px"><code>df</code> is a variable name for a table, as in <code>df = pd.read_csv("raw_events.csv")</code>. Here it is a 4-row toy:</p>
+          <table class="t" style="font-size:14px">
+            <thead><tr><th style="padding:3px 8px"></th><th style="padding:3px 8px">user_id</th><th style="padding:3px 8px">rating</th><th style="padding:3px 8px">ts</th></tr></thead>
+            <tbody class="mono">
+              <tr><td style="padding:2px 8px">0</td><td style="padding:2px 8px">7</td><td style="padding:2px 8px">4.5</td><td style="padding:2px 8px">1200</td></tr>
+              <tr><td style="padding:2px 8px">1</td><td style="padding:2px 8px">7</td><td style="padding:2px 8px">3.0</td><td style="padding:2px 8px">1300</td></tr>
+              <tr><td style="padding:2px 8px">2</td><td style="padding:2px 8px">9</td><td style="padding:2px 8px">5.0</td><td style="padding:2px 8px">1250</td></tr>
+              <tr><td style="padding:2px 8px">3</td><td style="padding:2px 8px">9</td><td style="padding:2px 8px;color:var(--bad)">NaN</td><td style="padding:2px 8px">0</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout gold" style="font-size:16px"><b>None of the six commands below changes <code>df</code>.</b> Each one <i>returns</i> something new (a value, a column, or a new table). <code>df</code> changes only when you assign the result back: <code>df = ...</code> replaces the whole table, <code>df["col"] = ...</code> adds or replaces one column. (<code>inplace=True</code> exists, but avoid it.)</div>
+      </div>
+      <table class="t" style="font-size:14px;margin-top:8px">
+        <thead><tr><th style="padding:4px 8px">Command</th><th style="padding:4px 8px">What it returns for the toy table</th><th style="padding:4px 8px">To keep the result</th></tr></thead>
+        <tbody>
+          <tr><td style="padding:3px 8px"><code>df.dtypes</code></td><td style="padding:3px 8px">the type of each column: <code>int64, float64, int64</code></td><td style="padding:3px 8px">nothing: it is information</td></tr>
+          <tr><td style="padding:3px 8px"><code>df.isna().sum()</code></td><td style="padding:3px 8px">missing values per column: <code>0, 1, 0</code></td><td style="padding:3px 8px">nothing: it is information</td></tr>
+          <tr><td style="padding:3px 8px"><code>df[df["rating"] &gt;= 4.0]</code></td><td style="padding:3px 8px">a <b>new table</b> with rows 0 and 2 (<code>df</code> still has 4 rows)</td><td style="padding:3px 8px"><code>df = df[df["rating"] &gt;= 4.0]</code></td></tr>
+          <tr><td style="padding:3px 8px"><code>df["ts"].between(1000, 2000)</code></td><td style="padding:3px 8px">one True/False per row: <code>T, T, T, F</code></td><td style="padding:3px 8px">used as the filter: <code>df = df[df["ts"].between(1000, 2000)]</code></td></tr>
+          <tr><td style="padding:3px 8px"><code>df.groupby("user_id").cumcount()</code></td><td style="padding:3px 8px">a column <code>0, 1, 0, 1</code>: how many rows of the same user came before</td><td style="padding:3px 8px"><code>df["n_before"] = df.groupby("user_id").cumcount()</code></td></tr>
+          <tr><td style="padding:3px 8px"><code>df.sort_values("ts")</code></td><td style="padding:3px 8px">a <b>new table</b>, same rows in the order 3, 0, 2, 1</td><td style="padding:3px 8px"><code>df = df.sort_values("ts")</code></td></tr>
+        </tbody>
+      </table>
+      <aside class="notes">
+        <p class="say">The most common beginner surprise: you run a pandas command, nothing seems to happen, because you did not keep the result.</p>
+        <ul><li>Run the first line of the table in your head with the toy table: <code>df[df["rating"] &gt;= 4.0]</code> prints a 2-row table, and the next line <code>df</code> still shows 4 rows. NaN compared with 4.0 is False, so row 3 is dropped too.</li>
+        <li>Two kinds of "keeping": <code>df = ...</code> rebinds the name to the new table; <code>df["n_before"] = ...</code> modifies the existing table by adding a column. The Colab uses both.</li>
+        <li>Four habits worth more than any function: look before touching (shape, dtypes, a random sample); count rows before and after every step that removes rows; sort explicitly before anything that depends on order; never edit the raw file, keep raw and clean in code.</li>
+        <li><code>cumcount</code> is the pandas way of saying "how many rows of this group came before me". The Colab uses it to count a user's earlier likes, then checks the result against the code that built the original signals.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 8 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Types and time">
+      <h2><span class="kick">Part 2 · Theory · 3 of 9</span>Types and time: convert first, filter later</h2>
+      <p class="sub">A numeric column that pandas shows as <code>object</code> or <code>str</code> is a column with text in it. You cannot ask whether a piece of text is "in the future".</p>
+      <div class="cols two grow" style="margin-top:6px">
+        <pre class="code"><code>text = col.astype(str).str.strip()
+text = text.str.replace(",", ".", regex=False)
+num  = pd.to_numeric(text, errors="coerce")
+#                    unreadable -> NaN, no crash
+
+secs = num.where(num < 1e11, num / 1000)
+#      1e11 s would be the year 5138: it is ms</code></pre>
+        <div class="card big"><h3>One timestamp, three forms</h3>
+          <table class="t" style="font-size:15px"><tbody>
+            <tr><td><code>1332458321</code></td><td>seconds since 1970</td></tr>
+            <tr><td><code>1332458321000</code></td><td>milliseconds: divide by 1000</td></tr>
+            <tr><td><code>2012-03-22 22:58:41</code></td><td>date text: <code>pd.to_datetime(..., utc=True)</code></td></tr>
+          </tbody></table>
+          <p class="small">Choose one unit and one time zone (UTC) for the whole pipeline, and write it down.</p></div>
+      </div>
+      <aside class="notes">
+        <p class="say">errors="coerce" is the polite way to fail: the bad value becomes NaN, and the next step can count and remove it.</p>
+        <ul><li>Without coerce, one bad cell stops the whole conversion. With coerce, you must remember to check for NaN afterwards: that is what the Colab's Step 2 does.</li>
+        <li>The 1e11 rule is a heuristic with a stated reason: it works for dates between 1973 and 5138. Say that heuristics need a written reason.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 9 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Clean it step by step">
+      <h2><span class="kick">Part 2 · Theory · 4 of 9</span>A twelve-row log, cleaned one step at a time</h2>
+      <p class="sub" style="font-size:16px"><b>What you see.</b> Press 0 to 6 to apply the cleaning steps in order. Struck-out rows are removed, with the reason; gold cells were repaired.</p>
+      <div data-widget="dirtylog"></div>
+      <aside class="notes">
+        <p class="say">The Colab does exactly this on 107 388 rows. Here you can see every row.</p>
+        <ul><li><b>Predict first.</b> At each step ask how many rows will remain, then press the button.</li>
+        <li>Step 1 removes nothing, yet it repairs rows 2, 4 and 11 (the gold cells). Rows 6 and 7 get a <code>NaN</code> there: that is how step 2 finds them.</li>
+        <li>Rows 6, 7 and 8 are all bad copies of the same real event (row 9). Dropping them loses nothing. Say that this is a property of this log, not a rule: if the copies were the only record, dropping them would lose data.</li>
+        <li>End state: five rows. In the Colab the same steps take 107 388 rows to 100 836, which is exactly the original table.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 10 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Joins">
+      <h2><span class="kick">Part 2 · Theory · 5 of 9</span>Joins: find the rows that point to nothing</h2>
+      <p class="sub" style="font-size:16px">A <b>merge</b> glues two tables on a shared column, like a SQL JOIN. Question: which events talk about a movie that is not in the movies table?</p>
+      <div style="display:grid;grid-template-columns:230px 1fr;gap:18px;align-items:start;margin-top:4px">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <p class="small" style="margin:0"><code>df</code> (events)</p>
+          <table class="t mono" style="font-size:14px"><thead><tr><th style="padding:3px 8px">user_id</th><th style="padding:3px 8px">item_id</th></tr></thead><tbody>
+            <tr><td style="padding:2px 8px">17</td><td style="padding:2px 8px">296</td></tr>
+            <tr><td style="padding:2px 8px">17</td><td style="padding:2px 8px">318</td></tr>
+            <tr><td style="padding:2px 8px">23</td><td style="padding:2px 8px">999999</td></tr></tbody></table>
+          <p class="small" style="margin:0"><code>movies</code></p>
+          <table class="t mono" style="font-size:14px"><thead><tr><th style="padding:3px 8px">item_id</th><th style="padding:3px 8px">title</th></tr></thead><tbody>
+            <tr><td style="padding:2px 8px">296</td><td style="padding:2px 8px">Pulp Fiction</td></tr>
+            <tr><td style="padding:2px 8px">318</td><td style="padding:2px 8px">Shawshank</td></tr></tbody></table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+<pre class="code"><code>checked = df.merge(movies, on="item_id",
+                   how="left",        # keep every event, even without a match
+                   indicator=True,    # add a column _merge: matched or not
+                   validate="m:1")    # each item must appear once in movies
+df = checked[checked["_merge"] == "both"]   # keep the matched rows</code></pre>
+          <p class="small" style="margin:0"><code>checked</code> (a new table; <code>df</code> is unchanged until the last line):</p>
+          <table class="t mono" style="font-size:14px"><thead><tr><th style="padding:3px 8px">user_id</th><th style="padding:3px 8px">item_id</th><th style="padding:3px 8px">title</th><th style="padding:3px 8px">_merge</th></tr></thead><tbody>
+            <tr><td style="padding:2px 8px">17</td><td style="padding:2px 8px">296</td><td style="padding:2px 8px">Pulp Fiction</td><td style="padding:2px 8px;color:var(--good)">both</td></tr>
+            <tr><td style="padding:2px 8px">17</td><td style="padding:2px 8px">318</td><td style="padding:2px 8px">Shawshank</td><td style="padding:2px 8px;color:var(--good)">both</td></tr>
+            <tr style="background:rgba(238,25,39,.10)"><td style="padding:2px 8px">23</td><td style="padding:2px 8px">999999</td><td style="padding:2px 8px;color:var(--bad)">NaN</td><td style="padding:2px 8px;color:var(--bad)">left_only</td></tr></tbody></table>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:8px;font-size:15px"><b>Why <code>validate="m:1"</code>?</b> If <code>movies</code> listed item 296 twice, a merge would silently produce two rows for each event on 296 and inflate every count after it. With <code>validate</code>, pandas stops with an error instead.</div>
+      <aside class="notes">
+        <p class="say">A merge is a lookup: for every event, find its movie. <code>how="left"</code> says: keep every event, even if nothing matches.</p>
+        <ul><li>The row with item 999999 has no match: the title is NaN and <code>_merge</code> says <code>left_only</code>. Filtering on <code>_merge == "both"</code> keeps only the events that point to something real.</li>
+        <li>In the Colab this removes 504 events about items that do not exist.</li>
+        <li><code>validate="m:1"</code> reads "many events to one movie". It checks an assumption you would otherwise only discover when your counts look inflated.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 11 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Duplicates">
+      <h2><span class="kick">Part 2 · Theory · 6 of 9</span>Duplicates: two problems, two operations</h2>
+      <p class="sub" style="font-size:16px">A log repeats itself in two ways. The same toy <code>df</code> goes through two steps; in each table, the red row is the one that step removes.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 0.8fr;gap:12px;align-items:start;margin-top:2px">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <h3 style="margin:0;font-size:16px">1 · Exact repeats <small>(input: 4 rows)</small></h3>
+<pre class="code" style="font-size:12.5px;padding:8px 10px;min-height:62px"><code>df = df.drop_duplicates()
+# drops a row equal to an earlier
+# row in EVERY column</code></pre>
+          <table class="t mono" style="font-size:13px"><thead><tr><th style="padding:3px 6px;font-size:13px">user</th><th style="padding:3px 6px;font-size:13px">item</th><th style="padding:3px 6px;font-size:13px">rating</th><th style="padding:3px 6px;font-size:13px">ts</th><th style="padding:3px 6px;font-size:13px"></th></tr></thead><tbody><tr><td style="padding:2px 6px">8</td><td style="padding:2px 6px">2571</td><td style="padding:2px 6px">4.0</td><td style="padding:2px 6px">1230788250</td><td style="padding:2px 6px;font-size:12px;font-family:var(--font)">first write</td></tr>
+<tr style="background:rgba(238,25,39,.14)"><td style="padding:2px 6px">8</td><td style="padding:2px 6px">2571</td><td style="padding:2px 6px">4.0</td><td style="padding:2px 6px">1230788250</td><td style="padding:2px 6px;font-size:12px;font-family:var(--font)">exact repeat <b style="color:var(--bad)">← removed</b></td></tr>
+<tr><td style="padding:2px 6px">8</td><td style="padding:2px 6px">2571</td><td style="padding:2px 6px">4.0</td><td style="padding:2px 6px">1230788270</td><td style="padding:2px 6px;font-size:12px;font-family:var(--font)">retry, 20 s later</td></tr>
+<tr><td style="padding:2px 6px">9</td><td style="padding:2px 6px">50</td><td style="padding:2px 6px">3.5</td><td style="padding:2px 6px">1230790000</td><td style="padding:2px 6px;font-size:12px;font-family:var(--font)"></td></tr></tbody></table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <h3 style="margin:0;font-size:16px">2 · Retries <small>(input: 3 rows)</small></h3>
+<pre class="code" style="font-size:12.5px;padding:8px 10px;min-height:62px"><code>df = df.sort_values("ts")
+df = df.drop_duplicates(
+    subset=["user_id", "item_id"])</code></pre>
+          <table class="t mono" style="font-size:13px"><thead><tr><th style="padding:3px 6px;font-size:13px">user</th><th style="padding:3px 6px;font-size:13px">item</th><th style="padding:3px 6px;font-size:13px">rating</th><th style="padding:3px 6px;font-size:13px">ts</th><th style="padding:3px 6px;font-size:13px"></th></tr></thead><tbody><tr><td style="padding:2px 6px">8</td><td style="padding:2px 6px">2571</td><td style="padding:2px 6px">4.0</td><td style="padding:2px 6px">1230788250</td><td style="padding:2px 6px;font-size:12px;font-family:var(--font)">first write</td></tr>
+<tr style="background:rgba(238,25,39,.14)"><td style="padding:2px 6px">8</td><td style="padding:2px 6px">2571</td><td style="padding:2px 6px">4.0</td><td style="padding:2px 6px">1230788270</td><td style="padding:2px 6px;font-size:12px;font-family:var(--font)">retry, 20 s later <b style="color:var(--bad)">← removed</b></td></tr>
+<tr><td style="padding:2px 6px">9</td><td style="padding:2px 6px">50</td><td style="padding:2px 6px">3.5</td><td style="padding:2px 6px">1230790000</td><td style="padding:2px 6px;font-size:12px;font-family:var(--font)"></td></tr></tbody></table>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <h3 style="margin:0;font-size:16px">Result <small>(2 rows)</small></h3>
+          <div style="min-height:62px;font-size:14px;padding-top:6px">one row per (user, item): the earliest.</div>
+          <table class="t mono" style="font-size:13px"><thead><tr><th style="padding:3px 6px;font-size:13px">user</th><th style="padding:3px 6px;font-size:13px">item</th><th style="padding:3px 6px;font-size:13px">rating</th><th style="padding:3px 6px;font-size:13px">ts</th><th style="padding:3px 6px;font-size:13px"></th></tr></thead><tbody><tr><td style="padding:2px 6px">8</td><td style="padding:2px 6px">2571</td><td style="padding:2px 6px">4.0</td><td style="padding:2px 6px">1230788250</td><td style="padding:2px 6px;font-size:12px;font-family:var(--font)">first write</td></tr>
+<tr><td style="padding:2px 6px">9</td><td style="padding:2px 6px">50</td><td style="padding:2px 6px">3.5</td><td style="padding:2px 6px">1230790000</td><td style="padding:2px 6px;font-size:12px;font-family:var(--font)"></td></tr></tbody></table>
+        </div>
+      </div>
+      <div class="cols two" style="margin-top:10px;gap:12px;align-items:start">
+        <div class="callout" style="font-size:15px"><b>Step 1</b> finds rows that are identical in every column. <b>Step 2</b> looks only at the columns in <code>subset</code>: the retry differs in <code>ts</code>, but it is the same (user, item) event. After sorting by <code>ts</code>, the first row of each pair is the earliest; <code>drop_duplicates</code> keeps the first and drops the rest.</div>
+        <div class="callout gold" style="font-size:15px"><b>Check the assumption first.</b> "Keep the earliest" is only safe if retries never change the value:
+<pre class="code" style="font-size:12px;padding:6px 10px;margin:6px 0 0"><code>pairs = df.groupby(["user_id", "item_id"])
+assert pairs["rating"].nunique().max() == 1</code></pre></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Two different problems that people call by the same name. Exact repeats are identical rows; retries are the same event written again a little later.</p>
+        <ul><li>First table: the second row is a byte-for-byte repeat of the first, and the third row is a retry 20 seconds later. Step 1 removes only the exact repeat (the retry differs in <code>ts</code>). Step 2 compares only (user, item): the first and the retry are the same pair, so after sorting by <code>ts</code> the earlier one stays.</li>
+        <li><code>sort_values</code> matters: <code>drop_duplicates</code> keeps the first row <i>in the current order</i>, so without the sort you would keep whichever row happened to come first in the file.</li>
+        <li>The assert is the point of the slide: "keep the earliest" is a rule with an assumption. If a retry had a different rating, which one is right? There is no pandas answer, it is a product decision. The assert makes the question visible instead of buried.</li>
+        <li>In the Colab: 2 016 exact repeats, then 1 512 retries, ending at exactly 100 836 rows.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 12 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Order of the steps">
+      <h2><span class="kick">Part 2 · Theory · 7 of 9</span>The order of the steps matters</h2>
+      <p class="sub" style="font-size:16px"><b>What you see.</b> Three rows are one real event of user 8: the event, a bad copy with <code>ts = 0</code>, and a retry. Two pipelines run the <b>same two operations</b> in a different order. Press Step 1, then Step 2, and compare the tables.</p>
+      <div data-widget="order"></div>
+      <aside class="notes">
+        <p class="say">Each step assumes the previous ones did their job. Write the steps in the order in which their assumptions become true.</p>
+        <ul><li><b>Predict first:</b> before pressing Step 2, ask which row will survive in each pipeline.</li>
+        <li>"Keep the earliest" assumes timestamps are meaningful. A timestamp of 0 is the earliest possible, so it always wins. In pipeline B it wins, and then the filter removes it: the user's like is gone, without an error message.</li>
+        <li>In the Colab a cell runs the wrong order on the whole log: 504 events end up with a wrong timestamp (or vanish, depending on what you do next).</li>
+        <li>Rule of thumb: types, then validity, then references, then duplicates.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 13 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="The future is not a feature">
+      <h2><span class="kick">Part 2 · Theory · 8 of 9</span>A feature must be computable at prediction time</h2>
+      <p class="sub" style="font-size:16px">Temporal leakage is the most expensive data bug in machine learning, because it makes results better, not worse. <b>One real row:</b> on 22 October 2017 user 159 likes <i>(500) Days of Summer</i>. That moment is <i>t</i>. How many likes does that movie have?</p>
+      <div class="panel" style="padding:12px 14px;margin-top:2px">
+        <div style="display:flex;gap:3px;height:54px;font-size:15px;font-weight:600;color:#fff">
+          <div style="flex:6;background:var(--good);display:flex;align-items:center;justify-content:center;border-radius:8px 0 0 8px">before t: 22 likes</div>
+          <div style="flex:3;background:var(--gold);color:#2a1800;display:flex;align-items:center;justify-content:center">t: this like (1)</div>
+          <div style="flex:3;background:var(--red);display:flex;align-items:center;justify-content:center;border-radius:0 8px 8px 0">after t: 3 likes</div>
+        </div>
+        <div style="display:flex;gap:3px;margin-top:6px;font-size:14px">
+          <div style="flex:6"><code>item_prior_likes = 22</code><br><span style="color:var(--good)"><b>✓ the app can compute it at <i>t</i></b></span></div>
+          <div style="flex:6;text-align:right"><code>item_total_likes = 22 + 1 + 3 = 26</code><br><span style="color:var(--bad)"><b>✗ needs the whole log: it contains the like we predict and 3 future ones</b></span></div>
+        </div>
+        <p class="small" style="margin:6px 0 0">Not to scale. Both columns are "the number of likes of the item"; they differ only in which part of the timeline they read.</p>
+      </div>
+      <div class="cols three" style="margin-top:8px;gap:12px">
+        <div class="card"><h3>Allowed</h3><p class="small" style="font-size:14px">Built from rows <b>before</b> <i>t</i>: <code>cumcount()</code>, counts over a window that ends at <i>t</i>.</p></div>
+        <div class="card" style="border-color:var(--red)"><h3 style="color:var(--bad)">Forbidden</h3><p class="small" style="font-size:14px">Totals over the whole log, a "final status", any column exported after <i>t</i>.</p></div>
+        <div class="card"><h3>The test</h3><p class="small" style="font-size:14px">Could the live app compute <b>this exact number</b> at time <i>t</i>? Recompute a few values from only the earlier rows and compare.</p></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Ask of every column: could the live app know this at the moment it must decide?</p>
+        <ul><li>Come back to the exam example from the clinic: the (500) Days of Summer row. 26 = 22 + this like + 3 later. Scorer A was better only because of the 4 extra likes it should not know about.</li>
+        <li>Link to the feed lab: it had a leakage check (the feed must not change when future events are added). Today's Colab applies the same idea to a whole table.</li>
+        <li>The Colab verifies it three ways: pandas recomputes <code>activity</code>, <code>age</code>, <code>freshness</code> and <code>lifetime</code> independently and compares them with the neural-network lab code; every candidate must exist before its moment; and a slow plain-Python loop recomputes a few <code>item_prior_likes</code>.</li>
+        <li>The bar is not to scale on purpose: the point is which part of the timeline each column reads.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 14 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Reproducible">
+      <h2><span class="kick">Part 2 · Theory · 9 of 9</span>Reproducible: the same input must give the same table</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+        <div class="card" style="padding:10px 14px"><h3 style="margin:0 0 2px">1 · Fixed seeds</h3>
+          <p class="small" style="margin:0 0 6px">Every random choice uses a seed, so the exam is the same on every run and scores can be compared.</p>
+<pre class="code" style="font-size:12.5px;padding:8px 10px"><code>rng = np.random.default_rng(42)
+negatives = rng.integers(0, n_items, 99)</code></pre>
+          <p class="small" style="margin:6px 0 0">Without the seed: a different set of 99 random items on every run.</p></div>
+        <div class="card" style="padding:10px 14px"><h3 style="margin:0 0 2px">2 · An audit trail</h3>
+          <p class="small" style="margin:0 0 6px">Rows before and after every step. If a step suddenly removes ten times more, you see it.</p>
+<pre class="code" style="font-size:12px;padding:8px 10px"><code>2. drop incomplete rows    107,388 -> 105,876  (1,512 removed)
+3. drop impossible ts      105,876 -> 104,868  (1,008 removed)
+4. drop unknown items      104,868 -> 104,364    (504 removed)</code></pre></div>
+        <div class="card" style="padding:10px 14px"><h3 style="margin:0 0 2px">3 · An answer key</h3>
+          <p class="small" style="margin:0 0 6px">The Colab broke the data itself, so it can check the cleaned log equals the original, row for row.</p>
+<pre class="code" style="font-size:12.5px;padding:8px 10px"><code>pd.testing.assert_frame_equal(CLEAN, EXPECTED)</code></pre>
+          <p class="small" style="margin:6px 0 0">Real pipelines rarely have one: check a small sample by hand instead.</p></div>
+        <div class="card" style="padding:10px 14px"><h3 style="margin:0 0 2px">4 · A fingerprint</h3>
+          <p class="small" style="margin:0 0 6px">A hash of the final table: same hash, same table. Round floats first.</p>
+<pre class="code" style="font-size:12.5px;padding:8px 10px"><code>text = table.to_csv(index=False,
+                    float_format="%.6f")
+hashlib.sha256(text.encode()).hexdigest()</code></pre></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Reproducible does not mean "it ran on my laptop". It means someone else gets the same bytes.</p>
+        <ul><li>Seeds: the exam picks 99 random items per question. With seed 42 every student gets the same exam, so a score is comparable with a classmate's.</li>
+        <li>Audit trail: the three lines are the real output of the Colab. The whole table is printed at the end of the notebook.</li>
+        <li>Answer key: say plainly that the Colab can do this only because it broke the data itself. A real project has no answer key, so you test assumptions and hand-check samples.</li>
+        <li>Fingerprint: the reference starts with <code>977334c6</code>. It was checked on two stacks (pandas 2.2.3 with NumPy 1.26, and pandas 3.1.1 with NumPy 2.5) and was identical. If a student's hash differs but every self-check passes, the likely cause is a library version; the table is usable, ask them to note their versions.</li>
+        <li>Later analyses start from this table. If hashes match, results are comparable across the class.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 15 ============================================================ -->
+    <section class="slide" data-segment="live" data-title="How to run the Colab">
+      <h2><span class="kick">Part 3 · Live Colab · 20 min</span>How to run it at home</h2>
+      <div class="cols two grow" style="margin-top:6px">
+        <div class="card big"><h3>Steps</h3>
+          <ol class="tight" style="margin:0;padding-left:22px;line-height:1.6;font-size:17px">
+            <li>Download <code>ml-latest-small.zip</code> in your browser (the GroupLens page; you may still have it from earlier labs)</li>
+            <li>Open <code>week06.ipynb</code> in Colab, <b>Runtime → Run all</b></li>
+            <li>When asked, upload the zip</li>
+            <li>The last cell downloads <code>feature_table.parquet</code>. <b>Keep it: later analyses start from this file.</b></li>
+          </ol></div>
+        <div class="card big"><h3>If something goes wrong</h3>
+          <ul class="tight"><li><b>FileNotFoundError:</b> the zip was not uploaded; run the data cell again</li><li><b>Different fingerprint, every check passes:</b> library versions; the table is still usable</li><li><b>A check fails:</b> something earlier was skipped; restart and run from the top</li><li>No GPU needed. Do not select one.</li></ul></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Ten minutes, once. The file is the only thing students need to keep.</p>
+        <ul><li>Colab deletes files when the runtime is recycled, so the download in the last cell matters. A copy on the student's computer or in Drive is the safe place.</li>
+        <li>The notebook has no TODO and no <code>RESULTS</code> block. Nothing is submitted.</li>
+        <li>Say what the file is for, in one sentence: <i>where does the model fail?</i> Students can slice the neural-network exam by user group, item age, genre and popularity and show at least three failure groups. The slicing columns in the table exist for that lab.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 16 ============================================================ -->
+    <section class="slide title" data-segment="reveal" data-title="What to remember">
+      <h2 style="font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#aac4ee">Summary</h2>
+      <h1 style="font-size:44px">Three things to remember</h1>
+      <div class="cols three" style="margin-top:6px">
+        <div class="card" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff"><h3 style="color:#fff">1 · Count</h3><p style="color:#dbe7fb">Look before you touch, and count rows before and after every step.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff"><h3 style="color:#fff">2 · Order</h3><p style="color:#dbe7fb">Each step assumes the earlier ones worked. Test the assumptions in code.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff"><h3 style="color:#fff">3 · Future</h3><p style="color:#dbe7fb">A result that looks too good: find the column that knows the future.</p></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Three sentences to leave on the wall. Then questions, and remind them of the Colab.</p>
+        <ul><li>Data credit: MovieLens <code>latest-small</code>, GroupLens Research (F. Maxwell Harper and Joseph A. Konstan, 2015). The deck contains only a few derived numbers and six movie titles (slides 5 and 13); the rows in the widgets are invented.</li></ul>
+      </aside>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <span></span>
+    <span id="counter">1 / 17</span>
+  </footer>
+
+  <!-- overlays -->
+  <div id="tip" role="tooltip"></div>
+  <aside id="notes" class="overlay" aria-hidden="true" aria-label="Speaker notes">
+    <button class="btn ghost small close" data-close="notes" aria-label="Close notes">Close</button>
+    <div id="notes-body"></div>
+  </aside>
+  <section id="overview" class="overlay" aria-hidden="true" aria-label="All slides">
+    <button class="btn ghost small close" data-close="overview" aria-label="Close overview">Close</button>
+    <h2 style="margin-bottom:12px">All slides</h2>
+    <div id="overview-grid"></div>
+  </section>
+  <section id="help" class="overlay" aria-hidden="true" aria-label="Keyboard help">
+    <button class="btn ghost small close" data-close="help" aria-label="Close help">Close</button>
+    <h2 style="margin-bottom:14px">Keyboard</h2>
+    <dl>
+      <dt><kbd>←</kbd> <kbd>→</kbd> / <kbd>PgUp</kbd> <kbd>PgDn</kbd></dt><dd>previous / next slide</dd>
+      <dt><kbd>Space</kbd> / <kbd>Shift</kbd>+<kbd>Space</kbd></dt><dd>next / previous</dd>
+      <dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd>first / last slide</dd>
+      <dt><kbd>G</kbd></dt><dd>overview of all slides</dd>
+      <dt><kbd>N</kbd></dt><dd>speaker notes for the current slide</dd>
+      <dt><kbd>F</kbd></dt><dd>full screen</dd>
+      <dt><kbd>Esc</kbd></dt><dd>close overlays</dd>
+    </dl>
+    <p class="small" style="margin-top:18px;max-width:760px">The numbers on the slides come from the Colab (MovieLens latest-small, GroupLens Research, seed 42). The rows in the widgets are invented. This folder is instructor material: it lives in the instructor-facing lecture folder and is not posted to Classroom.</p>
+  </section>
+
+</div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/tips.js"></script>
+<script src="js/core.js"></script>
+<script src="js/widgets.js"></script>
+</body>
+</html>
