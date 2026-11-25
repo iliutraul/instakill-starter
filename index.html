@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Failure Atlas</title>
+<meta name="description" content="Lecture deck for Programming for AI: visualization, slicing, intervals and honest charts. Instructor material.">
+<link rel="icon" href="assets/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/deck.css">
+</head>
+<body>
+<div class="viewport">
+<div class="stage" id="stage">
+
+  <header class="chrome">
+    <img class="logo" src="assets/LOGO-ULBS_orizontal_negativ.png" alt="Universitatea Lucian Blaga din Sibiu">
+    <span class="deck-title">Programming for AI</span>
+    <span class="chip" id="seg-chip">Checkpoint</span>
+    <span class="spacer"></span>
+    <div class="tools">
+      <button class="tool" id="btn-prev" aria-label="Previous slide">◀</button>
+      <button class="tool" id="btn-next" aria-label="Next slide">▶</button>
+      <button class="tool" id="btn-overview">Slides</button>
+      <button class="tool" id="btn-notes">Notes</button>
+      <button class="tool" id="btn-full">Full</button>
+      <button class="tool" id="btn-help">?</button>
+    </div>
+    <div id="progress"><div id="progress-bar"></div></div>
+  </header>
+
+  <main class="slides">
+
+    <!-- 1 ============================================================ -->
+    <section class="slide title" data-segment="intro" data-title="Failure Atlas">
+      <img class="logo-big" src="assets/LOGO-ULBS_orizontal_negativ.png" alt="Universitatea Lucian Blaga din Sibiu">
+      <h2 style="font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#aac4ee">Programming for AI · Visualization</h2>
+      <h1>Failure Atlas</h1>
+      <p>Your trained model wins on average. Today: where does it lose, and how do we show it honestly?</p>
+      <div class="meta">groups · intervals · honest charts · matplotlib</div>
+      <div class="hints"><span><kbd>←</kbd> <kbd>→</kbd> navigate</span><span><kbd>N</kbd> notes</span><span>hover a control: tooltip</span><span><kbd>G</kbd> all slides</span></div>
+      <svg class="motif" viewBox="0 0 430 300" aria-hidden="true">
+        <line x1="210" y1="10" x2="210" y2="290" stroke="#fff" stroke-width="2" opacity=".7"/>
+        <g stroke-width="5" stroke-linecap="round">
+          <line x1="40" y1="40" x2="120" y2="40" stroke="#ff6b74"/><circle cx="80" cy="40" r="9" fill="#ff6b74"/>
+          <line x1="180" y1="90" x2="205" y2="90" stroke="#ff6b74"/><circle cx="192" cy="90" r="9" fill="#ff6b74"/>
+          <line x1="225" y1="140" x2="250" y2="140" stroke="#9be05a"/><circle cx="237" cy="140" r="9" fill="#9be05a"/>
+          <line x1="320" y1="190" x2="350" y2="190" stroke="#9be05a"/><circle cx="335" cy="190" r="9" fill="#9be05a"/>
+          <line x1="250" y1="240" x2="290" y2="240" stroke="#9be05a"/><circle cx="270" cy="240" r="9" fill="#9be05a"/>
+        </g>
+        <path class="pulse" d="M 10 290 C 120 250, 260 270, 420 200" fill="none" stroke="#F7A30F" stroke-width="3"/>
+      </svg>
+      <aside class="notes">
+        <p class="say">Last time the model won. Today we look for where it loses. Before every reveal, the room bets, votes or guesses.</p>
+        <ul><li>Instructor material: <b>not posted to Classroom</b> (it shows the shape of the lab's answers on real data).</li>
+        <li>Every number in the widgets is real: the Week 6 feature table (MovieLens <code>latest-small</code>, seed 42; 1 808 validation and 1 753 test moments) scored by a reference Week 5 trained model (16 hidden neurons, test NDCG@10 0.463). Students' own trained models give slightly different numbers.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 2 ============================================================ -->
+    <section class="slide" data-segment="intro" data-title="The road so far">
+      <h2><span class="kick">Checkpoint</span>The road so far: six weeks, one product</h2>
+      <p class="sub">Click a week: what you built, what it added to InstaKill, and which files your repository should have.</p>
+      <div data-widget="roadmap"></div>
+      <aside class="notes">
+        <p class="say">Week 6 had no lab, so instead of demos we check where everybody is.</p>
+        <ul><li>Press "Walk the road" from W1; ask one student per week to say in one sentence what they built.</li>
+        <li>★ = one of the five InstaKill requirements: W3 pretrained model (first version), W4 algorithm, W5 trained model (first version), W7 evaluation (today), W11 profiling.</li>
+        <li>File names may differ; the boundaries should not (HTTP at the edge, a service, SQL behind a repository, pure ranking functions). <code>feature_table.parquet</code> stays outside git.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 3 ============================================================ -->
+    <section class="slide" data-segment="intro" data-title="Level check">
+      <h2><span class="kick">Checkpoint · 5 min</span>Level check: what already works?</h2>
+      <p class="sub">Open your repository now. Tick only what works <b>right now</b>.</p>
+      <div data-widget="levelcheck"></div>
+      <aside class="notes">
+        <p class="say">Two minutes: run pytest, call /feed. Tick what works now, not what almost works.</p>
+        <ul><li>Tick together with one volunteer's repository on the projector, then everybody checks their own.</li>
+        <li>The last item is needed for today's lab. A lost file is rebuilt by re-running the notebook that made it (deterministic).</li>
+        <li>Anyone missing a Week 5 piece fixes it before starting <code>evaluate.py</code>: evaluating a broken endpoint is worthless.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 4 ============================================================ -->
+    <section class="slide" data-segment="clinic" data-title="Place your bets">
+      <h2><span class="kick">Failure clinic · game</span>Our trained model wins on average. Where does it lose?</h2>
+      <div class="cols two" style="grid-template-columns:auto 1fr;align-items:center;gap:22px">
+        <div class="row" style="gap:18px"><div><div class="big-num">0.45</div><div class="small">trained model</div></div><div><div class="big-num" style="color:#b26b00">0.38</div><div class="small">best simple feed (most popular)</div></div></div>
+        <p class="sub" style="margin:0">NDCG@10 on the <b>validation set</b>: 1 808 <b>moments</b> the model never trained on. A moment = one real like, hidden among 99 other movies. The score (0–1) says how high the liked movie lands in the top 10.</p>
+      </div>
+      <p style="font-size:17px"><b>Bet:</b> the room has <b>3 chips</b>. Put them on the groups where you think the trained model <b>loses</b> to the best simple feed.</p>
+      <div data-widget="bets"></div>
+      <aside class="notes">
+        <p class="say">One number for 1 808 moments. Is it better for every kind of user and every kind of movie? Three chips, show of hands per card.</p>
+        <ul><li>Place the three chips on the most voted cards, then Reveal. The deck says how many losing groups the room found.</li>
+        <li>Most rooms bet on <b>new users</b> (cold start). The model actually <b>wins</b> there. It loses on <b>movies less than a year old</b> (by a lot) and, narrowly, on <b>1–5 year old</b> movies.</li>
+        <li>The simple feeds are the InstaKill strategies: newest first (<code>chronological</code>), most popular (<code>popularity</code>), the Week 4 formula (<code>for_you</code>). "Best" is chosen per group.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 5 ============================================================ -->
+    <section class="slide" data-segment="clinic" data-title="The reveal">
+      <h2><span class="kick">Failure clinic</span>The reveal: our trained model misses new movies</h2>
+      <p class="sub">The same 8 groups as the bets. Each row: trained model minus the best simple feed in that group, with a 95% interval. Then switch to the <b>test set</b>: does it still hold?</p>
+      <div data-widget="forest" data-split="val"></div>
+      <aside class="notes">
+        <p class="say">One row is far left. Does it still hold on data nobody looked at?</p>
+        <ul><li>Users: the model wins in all four groups, by 0.07–0.08, new users included. The room's cold-start bet loses.</li>
+        <li>Movies: &lt;1 year (n=104): model 0.344 vs <code>for_you</code> 0.783, −0.44. 1–5 years: −0.03, interval just below 0. 15+ years: +0.20; this group brings about 85% of the model's average gain.</li>
+        <li>Test set: the &lt;1 year loss holds (−0.38); the 1–5 year "loss" does not (its interval crosses 0). Lesson: a finding on validation is a hypothesis until the test set confirms it. This chart is panel B of the lab's atlas.</li>
+        <li>If asked what the interval is: the range of results we would get with other moments of the same kind. The lab notebook computes it (bootstrap) and shows how it is done.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 6 ============================================================ -->
+    <section class="slide" data-segment="clinic" data-title="Why new movies?">
+      <h2><span class="kick">Failure clinic</span>Why does it miss new movies? How we found out</h2>
+      <div class="cols two" style="grid-template-columns:1fr 1.15fr;gap:22px;align-items:start;margin-top:2px">
+        <ol class="steps">
+          <li><b>Find the group.</b> The reveal: movies under a year old, 104 moments, −0.44.</li>
+          <li><b>Count.</b> In 40 of the 104 moments the liked movie is <b>not</b> in the model's top 10. <code>for_you</code> has it in its top 10 every time.</li>
+          <li><b>Look at one moment</b> (right).</li>
+          <li><b>Compare all 104.</b> Liked movie vs the model's top 10, on average: freshness <b>0.90</b> vs 0.19 · likes so far 0.18 vs <b>0.53</b> · age 0.02 vs <b>0.51</b>.</li>
+          <li><b>Test the idea.</b> Give the same 104 movies more likes so far (0.18 → 0.40): the model's average P(like) rises from 0.29 to 0.36.</li>
+        </ol>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="card" style="padding:12px 16px">
+            <p style="font-size:15px;margin-bottom:8px"><b>One real moment</b> · user 319 (29 likes so far), 23 April 2016. They liked a movie released that spring.</p>
+            <table class="t" style="font-size:15px">
+              <thead><tr><th></th><th>liked: <i>Batman v Superman</i> (2016)</th><th>model's #1: <i>Good Will Hunting</i> (1997)</th></tr></thead>
+              <tbody>
+                <tr><td>freshness</td><td><b>0.98</b></td><td>0.02</td></tr>
+                <tr><td>likes so far</td><td>0.00</td><td><b>0.80</b></td></tr>
+                <tr><td>model's P(like)</td><td>0.04</td><td><b>0.90</b></td></tr>
+                <tr><td>rank, trained model</td><td class="warn">31st of 100</td><td>1st</td></tr>
+                <tr><td>rank, <code>for_you</code></td><td style="color:var(--good);font-weight:700">3rd of 100</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout gold" style="font-size:17px"><b>Conclusion:</b> the model trusts a long history of likes. A new movie has not had time to collect one, so old classics win.</div>
+        </div>
+      </div>
+      <aside class="notes">
+        <p class="say">A failure is useful only with a why. Here is the path from "this group is red" to a sentence we can defend.</p>
+        <ul><li>Steps 1–2 say <i>how big</i> the problem is; step 3 makes it concrete; step 4 finds the signals that differ; step 5 checks the explanation by changing one signal and watching the model react.</li>
+        <li>Step 5 also rules out the simpler story "new is bad": making the same movies older lowers the model's score. The problem is "no history", not "new".</li>
+        <li>This is exactly what Task 4 of the lab asks for in <code>why</code>: name the signals, not just the group.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 7 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Who wins depends on the users">
+      <h2><span class="kick">Theory · challenge</span>Who wins depends on what your users like</h2>
+      <p class="sub">The overall score is an average over all likes, and every like counts once. So the most common kind of like decides the winner. On our data most likes go to old movies; on InstaKill they go to new posts. <b>Move the sliders</b> and watch the ranking.</p>
+      <div data-widget="mix"></div>
+      <div class="cols" style="grid-template-columns:1fr 2.2fr;gap:14px;align-items:stretch">
+        <div class="callout purple" style="font-size:16px"><b>What it means:</b> there is no "best strategy" in general. A score is true only for the users it was measured on.</div>
+        <div class="cols three" style="gap:10px">
+          <div class="card" style="padding:10px 12px"><h3 style="font-size:16px">1 · Test on your users</h3><p style="font-size:14.5px">Evaluate on data like your app's: InstaKill's own likes (<code>evaluate.py</code>).</p></div>
+          <div class="card" style="padding:10px 12px"><h3 style="font-size:16px">2 · Report per group</h3><p style="font-size:14.5px">Show the score for each group, not only the average.</p></div>
+          <div class="card" style="padding:10px 12px"><h3 style="font-size:16px">3 · Decide with the groups</h3><p style="font-size:14.5px">Different winners? Serve each group its winner, e.g. <code>for_you</code> for new posts.</p></div>
+        </div>
+      </div>
+      <aside class="notes">
+        <p class="say">The four strategies keep exactly the scores we measured in each age group. We only change how many likes fall in each group. Who wins now?</p>
+        <ul><li>Each row on the left says which strategy is best for that kind of like: <code>for_you</code> for movies under a year old, popularity for 1–5 years, the trained model for older movies.</li>
+        <li>Press "InstaKill: mostly new posts" (60% of likes on new items): <code>for_you</code> wins (about 0.56 vs 0.36). Back to "Our data": the trained model wins.</li>
+        <li>The sentence to keep: a ranking of strategies is valid only for the users it was measured on.</li>
+        <li>What to do, in order: (1) measure on data that looks like your app, which is why the InstaKill evaluation runs on <i>your</i> database (trap 2 of the protocol); (2) report every group, not only the average; (3) when groups have different winners, a mixed feed (for example <code>for_you</code> for posts under a year old, <code>learned</code> for the rest) is a decision the per-group numbers can defend. This week students only measure; changing the product comes later.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 11 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Anatomy of a figure">
+      <h2><span class="kick">Theory · matplotlib</span>Every mark is one line of code</h2>
+      <p class="sub">Click a part of the chart or a line of code. One <code>Figure</code>, one or more <code>Axes</code>; every command goes to an <code>ax</code>.</p>
+      <div data-widget="anatomy"></div>
+      <aside class="notes">
+        <p class="say">This is all the matplotlib you need for the lab.</p>
+        <ul><li>Use <code>fig, axes = plt.subplots(2, 2)</code> and then <code>ax.something</code>. With four panels, <code>plt.something</code> goes to the last active panel: the source of most "my title is on the wrong panel" bugs.</li>
+        <li>The chart is a sketch of panel B; the code shows the calls, not the lab's solution.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 10 ============================================================ -->
+    <section class="slide" data-segment="theory" data-title="Clear charts, easier analysis">
+      <h2><span class="kick">Theory · game</span>A clearer chart makes the analysis easier</h2>
+      <p class="sub">Six charts from today's data. Find what makes each one misleading, then compare with the clear version: same numbers, easier answer.</p>
+      <div data-widget="clearcharts"></div>
+      <aside class="notes">
+        <p class="say">The numbers are correct in every chart. Only the drawing makes the analysis harder. What would you change?</p>
+        <ul><li>Chart 1: the axis starts at 0.37, so a 20% gap looks ten times bigger. Takeaway: bars start at 0.</li>
+        <li>Chart 2: no interval, no count. Animation (50 moments) looks like a loss; with intervals it is nothing. Takeaway: interval and n on every comparison.</li>
+        <li>Chart 3: a pie of four separate scores. The shares mean nothing; bars compare the scores directly.</li>
+        <li>Chart 4: the same two strategies swap colours between two charts. Readers carry the colours over and read the opposite.</li>
+        <li>Chart 5: correct numbers, but no question, no axis label, no group names. Nobody can tell what it shows.</li>
+        <li>Chart 6: rainbow colours on a difference that can be negative. The clear version (red below 0, white at 0, blue above) shows the new-movie column at a glance.</li>
+        <li>The lab's chart linter checks titles, labels, intervals, bars from 0 and centred colours.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 13 ============================================================ -->
+    <section class="slide" data-segment="reveal" data-title="Lab 07: Failure Atlas">
+      <h2><span class="kick">Challenge reveal</span>Lab 07: Failure Atlas</h2>
+      <p class="sub">Nothing to write: run the notebook top to bottom and read what each step shows. Inputs: <code>feature_table.parquet</code> (W6) and <code>like_model.npz</code> (W5).</p>
+      <div class="cols two" style="margin-top:4px">
+        <div class="card big"><h3>What it does with your model</h3>
+          <ul class="tight"><li><b>1</b> · scores the 4 strategies on the same moments</li><li><b>2</b> · trained model vs best simple feed, per group, with a 95% interval</li><li><b>3</b> · draws the atlas: one figure, four panels</li><li><b>4</b> · checks every group again on the test set</li></ul></div>
+        <div class="card big"><h3>Done when</h3>
+          <ul class="tight"><li>every cell ran, the chart linter too</li><li><code>failure_atlas.png</code> is submitted</li><li>the printed <code>RESULTS</code> block is in the notebook</li></ul></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Your own model, the same questions as today. What you see on slide 5 you will see for your model.</p>
+        <ul><li>NumPy, pandas and matplotlib only. A group that changes verdict on the test set is a valid result.</li>
+        <li>Panel D: is P(like) an honest probability? When the reference model says 0.8–1.0 (mean 0.88), only 30% of those candidates are likes (it was trained with 1 like per 4 non-likes; the feed has 1 per 100).</li></ul>
+      </aside>
+    </section>
+
+    <!-- 14 ============================================================ -->
+    <section class="slide" data-segment="reveal" data-title="InstaKill: replay your feed">
+      <h2><span class="kick">InstaKill</span>InstaKill: replay your own feed at time T</h2>
+      <p class="sub">Freeze your database at <b>T</b>: before T is what the app knew, the likes after T are the answers. Ask your real <code>GET /feed</code> code for each user's top 10. (Invented dots.)</p>
+      <div data-widget="replay"></div>
+      <aside class="notes">
+        <p class="say">Same question as the lab, on your data, through your code. Do not re-implement the strategies in the script.</p>
+        <ul><li>Blue = history, gold = answers, grey = likes on posts that did not exist at T (ignored).</li>
+        <li>Later T = more history, fewer answers. Default: the moment by which 80% of the likes happened.</li>
+        <li>The leakage test checks the snapshot has nothing at or after T (the W6 lesson). Follows derived from likes are re-derived in the snapshot.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 15 ============================================================ -->
+    <section class="slide" data-segment="reveal" data-title="What to commit">
+      <h2><span class="kick">InstaKill</span>What to commit, and two traps</h2>
+      <p class="sub">Measure; do not change what you measure.</p>
+      <div class="cols two" style="margin-top:4px;grid-template-columns:1fr 1fr">
+        <div class="card big"><h3>Three things</h3>
+          <ul class="tight"><li><code>scripts/evaluate.py</code> + its tests</li><li><code>reports/</code>: the table with intervals and a static dashboard</li><li><code>docs/evaluation-protocol.md</code></li></ul></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="callout red"><b>Trap 1.</b> The model was trained on the same MovieLens likes that fill your database. It has seen part of the answers.</div>
+          <div class="callout gold"><b>Trap 2.</b> MovieLens is old movies, InstaKill is new posts. Which strategy would win on your feed?</div>
+        </div>
+      </div>
+      <div class="callout green">At least one git commit for this week. Next lecture: "Do you have a baseline? Do you have a protocol?"</div>
+      <aside class="notes">
+        <p class="say">Both traps must be discussed in the protocol, with a number.</p>
+        <ul><li>Trap 1: the W5 lab trained on likes before its own validation cut-off; the seeded database contains them. State the overlap and that it makes <code>learned</code> look better.</li>
+        <li>Trap 2 is the mix slide: write which strategy the groups suggest for a feed of new posts; do not change the product this week.</li>
+        <li>The full file list is in the assignment README. pandas and matplotlib go in an optional extra.</li></ul>
+      </aside>
+    </section>
+
+    <!-- 16 ============================================================ -->
+    <section class="slide title" data-segment="reveal" data-title="What to remember">
+      <h2 style="font-size:16px;letter-spacing:2px;text-transform:uppercase;color:#aac4ee">Summary</h2>
+      <h1 style="font-size:40px">One average hides who is served badly.</h1>
+      <div class="cols three" style="margin-top:14px">
+        <div class="card" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);padding:10px 14px"><h3 style="color:#fff">Split</h3><p style="color:#dbe7fb;font-size:15px">Who is served badly hides inside the average.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);padding:10px 14px"><h3 style="color:#fff">Interval</h3><p style="color:#dbe7fb;font-size:15px">Every comparison gets one. Find on validation, confirm on test.</p></div>
+        <div class="card" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);padding:10px 14px"><h3 style="color:#fff">Draw</h3><p style="color:#dbe7fb;font-size:15px">One question per panel; make the answer easy to see.</p></div>
+      </div>
+      <aside class="notes">
+        <p class="say">Three words: split, interval, draw.</p>
+        <ul><li>Data credit: MovieLens <code>latest-small</code>, GroupLens Research (F. Maxwell Harper and Joseph A. Konstan, 2015). The deck embeds derived per-moment scores only; the replay dots are invented.</li>
+        <li>Next lecture opens with the audit question and lightning demos of the atlas; a well-investigated claim that did not replicate is eligible for the full bonus.</li></ul>
+      </aside>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <span>Data: MovieLens latest-small, GroupLens Research · per-moment scores from the reference run of the lab</span>
+    <span id="counter">1 / 14</span>
+  </footer>
+
+  <!-- overlays -->
+  <div id="tip" role="tooltip"></div>
+  <aside id="notes" class="overlay" aria-hidden="true" aria-label="Speaker notes">
+    <button class="btn ghost small close" data-close="notes" aria-label="Close notes">Close</button>
+    <div id="notes-body"></div>
+  </aside>
+  <section id="overview" class="overlay" aria-hidden="true" aria-label="All slides">
+    <button class="btn ghost small close" data-close="overview" aria-label="Close overview">Close</button>
+    <h2 style="margin-bottom:12px">All slides</h2>
+    <div id="overview-grid"></div>
+  </section>
+  <section id="help" class="overlay" aria-hidden="true" aria-label="Keyboard help">
+    <button class="btn ghost small close" data-close="help" aria-label="Close help">Close</button>
+    <h2 style="margin-bottom:14px">Keyboard</h2>
+    <dl>
+      <dt><kbd>←</kbd> <kbd>→</kbd> / <kbd>PgUp</kbd> <kbd>PgDn</kbd></dt><dd>previous / next slide</dd>
+      <dt><kbd>Space</kbd> / <kbd>Shift</kbd>+<kbd>Space</kbd></dt><dd>next / previous</dd>
+      <dt><kbd>Home</kbd> <kbd>End</kbd></dt><dd>first / last slide</dd>
+      <dt><kbd>G</kbd></dt><dd>overview of all slides</dd>
+      <dt><kbd>N</kbd></dt><dd>speaker notes for the current slide</dd>
+      <dt><kbd>F</kbd></dt><dd>full screen</dd>
+      <dt><kbd>Esc</kbd></dt><dd>close overlays</dd>
+    </dl>
+    <p class="small" style="margin-top:18px;max-width:760px">The numbers come from the real exam (MovieLens latest-small, GroupLens Research; Week 6 feature table, seed 42) scored by a reference trained model. The dots on the InstaKill replay slide are invented. This folder is instructor material: it lives in the instructor-facing lecture folder and is not posted to Classroom.</p>
+  </section>
+
+</div>
+</div>
+
+<script src="js/util.js"></script>
+<script src="js/tips.js"></script>
+<script src="js/data.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/core.js"></script>
+<script src="js/widgets-road.js"></script>
+<script src="js/widgets-games.js"></script>
+<script src="js/widgets-stats.js"></script>
+</body>
+</html>
