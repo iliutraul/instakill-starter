@@ -1,0 +1,16 @@
+{
+  "best_val": 0.7797337109743289,
+  "hidden": 32,
+  "learning_rate": 0.02,
+  "epochs": 80,
+  "test": 0.7545711329217429,
+  "baselines_val": {
+    "chronological": 0.11861832426212009,
+    "popularity": 0.3204360963059555,
+    "week4": 0.12151973800736698,
+    "own_week4": 0.11732072563720157,
+    "linear": 0.7708555956656057
+  },
+  "parameter_count": 257,
+  "model_size": 3600
+}
